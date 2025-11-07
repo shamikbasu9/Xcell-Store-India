@@ -49,7 +49,7 @@
                     <p class="mb-0 text-white-50">&copy; <?php echo date('Y'); ?> Xcell Store India. All rights reserved.</p>
                 </div>
                 <div class="col-md-6 text-center text-md-end">
-                    <a href="#" class="text-white-50 text-decoration-none me-3">Privacy Policy</a>
+                    <a href="https://xcellstoreindia.in/privacy" class="text-white-50 text-decoration-none me-3">Privacy Policy</a>
                     <a href="https://xcellstoreindia.in/terms" class="text-white-50 text-decoration-none">Terms and Conditions</a>
                 </div>
             </div>

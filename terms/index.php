@@ -8,7 +8,7 @@
 <body>
   <h1>Terms and Conditions</h1>
 
-  <p>Welcome to <strong>YourCompanyName</strong>! These terms and conditions outline the rules and regulations for the use of our website, located at <strong>https://yourdomain.com</strong>.</p>
+  <p>Welcome to <strong>YourCompanyName</strong>! These terms and conditions outline the rules and regulations for the use of our website, located at <strong>https://xcellstoreindia.in/</strong>.</p>
 
   <h2>1. Acceptance of Terms</h2>
   <p>By accessing this website, you agree to be bound by these terms and conditions. If you disagree with any part of the terms, you may not use our services.</p>
@@ -20,7 +20,7 @@
   <p>Payments are processed securely through our payment partner Razorpay. Prices for our products and services are subject to change without notice.</p>
 
   <h2>4. Refunds and Cancellations</h2>
-  <p>If you are not satisfied with your purchase, you may request a refund within [X days] of the transaction. Refund eligibility will be subject to our review. Please contact us at <strong>support@yourdomain.com</strong> for refund-related queries.</p>
+  <p>If you are not satisfied with your purchase, you may request a refund within [X days] of the transaction. Refund eligibility will be subject to our review. Please contact us at <strong>xcellstoreindia@gmail.com</strong> for refund-related queries.</p>
 
   <h2>5. Limitation of Liability</h2>
   <p>We are not responsible for any direct or indirect damages that may arise from the use or inability to use our website or services.</p>
@@ -31,9 +31,10 @@
   <h2>7. Contact Us</h2>
   <p>For any questions about these Terms and Conditions, please contact us at:</p>
   <ul>
-    <li>Email: support@yourdomain.com</li>
-    <li>Address: [Your Company Address]</li>
-    <li>Phone: [Your contact number]</li>
+    <li>Email: xcellstoreindia@gmail.com</li>
+    <li>Address: 2682, VIDYA SAGAR SARANI, Purba Barisha, Kolkata, South Twenty
+Four Parganas, West Bengal, 700063</li>
+    <li>Phone: +91 90380 66220</li>
   </ul>
 
   <p>Last updated: [Date]</p>
