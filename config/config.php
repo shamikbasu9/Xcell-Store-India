@@ -4,7 +4,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 define('SITE_NAME', 'Xcell Store India');
-define('SITE_URL', 'http://localhost/Xcell%20Store%20India');
+define('SITE_URL', 'https://xcellstoreindia.in');
 define('ADMIN_EMAIL', 'admin@xcellstore.com');
 
 define('UPLOAD_DIR', __DIR__ . '/../uploads/');
@@ -21,8 +21,8 @@ define('FREE_SHIPPING_ABOVE', 500);
 
 // Razorpay Configuration
 define('RAZORPAY_TEST_MODE', true); // Set to false for live mode
-define('RAZORPAY_TEST_KEY', 'rzp_test_RY172RjjkXU0xu'); // Replace with your test key
-define('RAZORPAY_TEST_SECRET', '96RIPq2pU06S2pcyPVmE01w3'); // Replace with your test secret
+define('RAZORPAY_TEST_KEY', 'rzp_test_RcxXrCvTD7U3AD'); // Replace with your test key
+define('RAZORPAY_TEST_SECRET', 'EM8fxdCR0nJap2TM1GUOQlM0'); // Replace with your test secret
 define('RAZORPAY_LIVE_KEY', 'rzp_live_YOUR_LIVE_KEY'); // Replace with your live key
 define('RAZORPAY_LIVE_SECRET', 'YOUR_LIVE_SECRET'); // Replace with your live secret
 
