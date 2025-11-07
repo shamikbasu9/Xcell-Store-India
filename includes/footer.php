@@ -50,7 +50,7 @@
                 </div>
                 <div class="col-md-6 text-center text-md-end">
                     <a href="#" class="text-white-50 text-decoration-none me-3">Privacy Policy</a>
-                    <a href="<?php echo SITE_URL; ?>/terms/" class="text-white-50 text-decoration-none">Terms and Conditions</a>
+                    <a href="https://xcellstoreindia.in/terms" class="text-white-50 text-decoration-none">Terms and Conditions</a>
                 </div>
             </div>
         </div>

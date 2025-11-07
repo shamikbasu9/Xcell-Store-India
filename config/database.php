@@ -1,7 +1,7 @@
 <?php
 define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_USER', 'xcell_store_india');
+define('DB_PASS', 'zfn5+vY]jqJoe');
 define('DB_NAME', 'xcell_store_india');
 
 function getDBConnection() {
