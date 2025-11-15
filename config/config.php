@@ -20,11 +20,11 @@ define('SHIPPING_CHARGE', 50);
 define('FREE_SHIPPING_ABOVE', 500);
 
 // Razorpay Configuration
-define('RAZORPAY_TEST_MODE', true); // Set to false for live mode
-define('RAZORPAY_TEST_KEY', 'rzp_test_RcxXrCvTD7U3AD'); // Replace with your test key
-define('RAZORPAY_TEST_SECRET', 'EM8fxdCR0nJap2TM1GUOQlM0'); // Replace with your test secret
-define('RAZORPAY_LIVE_KEY', 'rzp_live_YOUR_LIVE_KEY'); // Replace with your live key
-define('RAZORPAY_LIVE_SECRET', 'YOUR_LIVE_SECRET'); // Replace with your live secret
+define('RAZORPAY_TEST_MODE', false); // Set to false for live mode
+define('RAZORPAY_TEST_KEY', 'rzp_test_RfHfYmR81bfCdh'); // Replace with your test key
+define('RAZORPAY_TEST_SECRET', '53Y0UUKKSQ3KHyVguef1wHLV'); // Replace with your test secret
+define('RAZORPAY_LIVE_KEY', 'rzp_live_Rg2KdPzw6UAzaT'); // Replace with your live key
+define('RAZORPAY_LIVE_SECRET', 'ZRdwSI4CkgbdSqQpZIYlRUMF'); // Replace with your live secret
 
 // Get active Razorpay credentials based on mode
 define('RAZORPAY_KEY', RAZORPAY_TEST_MODE ? RAZORPAY_TEST_KEY : RAZORPAY_LIVE_KEY);

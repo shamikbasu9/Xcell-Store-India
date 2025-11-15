@@ -20,9 +20,9 @@ $userId = $_SESSION['user_id'];
 $paymentMethod = sanitize($_POST['payment_method']);
 $addressId = isset($_POST['address_id']) ? intval($_POST['address_id']) : 0;
 
-$subtotal = getCartTotal();
-$shipping = calculateShipping($subtotal);
-$tax = calculateTax($subtotal);
+$subtotal = round(getCartTotal(), 2);
+$shipping = round(calculateShipping($subtotal), 2);
+$tax = round(calculateTax($subtotal), 2);
 $discount = 0;
 $couponId = null;
 
@@ -32,13 +32,15 @@ if (isset($_SESSION['applied_coupon'])) {
     $discount = $coupon['discount_type'] === 'flat' 
         ? $coupon['discount_value'] 
         : ($subtotal * $coupon['discount_value']) / 100;
+    $discount = round($discount, 2);
     
     if ($coupon['max_discount'] && $discount > $coupon['max_discount']) {
-        $discount = $coupon['max_discount'];
+        $discount = round($coupon['max_discount'], 2);
     }
 }
 
-$total = $subtotal + $shipping + $tax - $discount;
+$total = round($subtotal + $shipping + $tax - $discount, 2);
+$amountForPayment = number_format($total, 2, '.', '');
 $orderNumber = generateOrderNumber();
 
 $conn = getDBConnection();
@@ -85,7 +87,12 @@ try {
     // Clear cart
     clearCart();
     
-    echo json_encode(['success' => true, 'order_id' => $orderId, 'order_number' => $orderNumber]);
+    echo json_encode([
+        'success' => true,
+        'order_id' => $orderId,
+        'order_number' => $orderNumber,
+        'order_amount' => $amountForPayment
+    ]);
     
 } catch (Exception $e) {
     $conn->rollback();

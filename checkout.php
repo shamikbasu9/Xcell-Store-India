@@ -282,7 +282,7 @@ async function placeOrder() {
                 window.location.href = 'order-success.php?order=' + data.order_id;
             } else if (paymentMethod.value === 'razorpay') {
                 // Create Razorpay order first
-                createRazorpayOrder(data.order_id, data.order_number, <?php echo $total; ?>);
+                createRazorpayOrder(data.order_id, data.order_number, data.order_amount);
             }
         } else {
             alert(data.message || 'Failed to place order');
@@ -299,33 +299,74 @@ async function placeOrder() {
 }
 
 function createRazorpayOrder(orderId, orderNumber, amount) {
+    const btn = document.querySelector('button[onclick*="placeOrder"]');
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+    
+    // Format amount to 2 decimal places to avoid floating point precision issues
+    const formattedAmount = parseFloat(amount).toFixed(2);
+    
     fetch('create-razorpay-order.php', {
         method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `order_id=${orderId}&amount=${amount}`
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `order_id=${orderId}&amount=${formattedAmount}`
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             initiateRazorpayPayment(orderId, orderNumber, data.razorpay_order_id, data.amount);
         } else {
-            alert(data.message || 'Failed to initialize payment');
-            const btn = document.querySelector('button[onclick*="placeOrder"]');
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-check"></i> Place Order';
-            }
+            throw new Error(data.message || 'Failed to initialize payment');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Failed to initialize payment. Please try again.');
-        const btn = document.querySelector('button[onclick*="placeOrder"]');
+        
+        // Show error message to user
+        const errorMessage = error.message || 'Failed to process payment. Please try again.';
+        showAlert('error', 'Payment Error', errorMessage);
+        
+        // Re-enable the button
         if (btn) {
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-check"></i> Place Order';
+            btn.innerHTML = '<i class="fas fa-lock"></i> Place Order';
         }
     });
+}
+
+// Helper function to show alerts
+function showAlert(type, title, message) {
+    // Create alert element
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show mt-3`;
+    alertDiv.role = 'alert';
+    alertDiv.innerHTML = `
+        <strong>${title}</strong> ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    // Insert before the payment form
+    const paymentForm = document.querySelector('.payment-method');
+    if (paymentForm) {
+        paymentForm.parentNode.insertBefore(alertDiv, paymentForm);
+    } else {
+        document.body.prepend(alertDiv);
+    }
+    
+    // Auto-dismiss after 10 seconds
+    setTimeout(() => {
+        const alert = bootstrap.Alert.getOrCreateInstance(alertDiv);
+        alert.close();
+    }, 10000);
 }
 
 function initiateRazorpayPayment(orderId, orderNumber, razorpayOrderId, amount) {

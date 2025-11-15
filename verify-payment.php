@@ -22,8 +22,8 @@ if (!$orderId || !$paymentId || !$signature) {
 try {
     $conn = getDBConnection();
     
-    // Get order details
-    $stmt = $conn->prepare("SELECT order_number, total FROM orders WHERE id = ? AND user_id = ?");
+    // Get order details including Razorpay order ID
+    $stmt = $conn->prepare("SELECT order_number, payment_gateway_order_id, total FROM orders WHERE id = ? AND user_id = ?");
     $stmt->bind_param("ii", $orderId, $_SESSION['user_id']);
     $stmt->execute();
     $order = $stmt->get_result()->fetch_assoc();
@@ -34,8 +34,20 @@ try {
         exit;
     }
     
-    // Verify signature
-    $generatedSignature = hash_hmac('sha256', $order['order_number'] . '|' . $paymentId, RAZORPAY_SECRET);
+    // Verify signature using Razorpay order ID
+    $razorpayOrderId = $order['payment_gateway_order_id'];
+    if (!$razorpayOrderId) {
+        echo json_encode(['success' => false, 'message' => 'Razorpay order ID not found']);
+        exit;
+    }
+    
+    $generatedSignature = hash_hmac('sha256', $razorpayOrderId . '|' . $paymentId, RAZORPAY_SECRET);
+    
+    // Debug logging
+    error_log("Payment Verification Debug: Order ID: $orderId, Razorpay Order ID: $razorpayOrderId, Payment ID: $paymentId");
+    error_log("Generated Signature: $generatedSignature");
+    error_log("Received Signature: $signature");
+    error_log("Signature Match: " . ($generatedSignature === $signature ? 'YES' : 'NO'));
     
     if ($generatedSignature === $signature) {
         // Update order payment status
