@@ -15,7 +15,6 @@ if (!file_exists(UPLOAD_DIR)) mkdir(UPLOAD_DIR, 0755, true);
 if (!file_exists(PRODUCT_IMAGES_DIR)) mkdir(PRODUCT_IMAGES_DIR, 0755, true);
 
 define('DEFAULT_CURRENCY', 'INR');
-define('TAX_RATE', 18);
 define('SHIPPING_CHARGE', 50);
 define('FREE_SHIPPING_ABOVE', 500);
 

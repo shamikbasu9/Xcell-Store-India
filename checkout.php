@@ -11,7 +11,6 @@ if (empty($cartItems)) {
 
 $subtotal = getCartTotal();
 $shipping = calculateShipping($subtotal);
-$tax = calculateTax($subtotal);
 $discount = 0;
 $couponCode = '';
 
@@ -38,7 +37,7 @@ if (isset($_SESSION['applied_coupon'])) {
     }
 }
 
-$total = $subtotal + $shipping + $tax - $discount;
+$total = $subtotal + $shipping - $discount;
 
 // Get current user
 $currentUser = getCurrentUser();
@@ -184,11 +183,6 @@ $conn->close();
                     <div class="d-flex justify-content-between mb-2">
                         <span>Shipping</span>
                         <span><?php echo $shipping > 0 ? formatCurrency($shipping) : 'FREE'; ?></span>
-                    </div>
-                    
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Tax (<?php echo TAX_RATE; ?>%)</span>
-                        <span><?php echo formatCurrency($tax); ?></span>
                     </div>
                     
                     <?php if ($discount > 0): ?>

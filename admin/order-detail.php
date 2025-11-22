@@ -50,6 +50,11 @@ $conn->close();
     <a href="orders.php" class="btn btn-outline-secondary">
         <i class="fas fa-arrow-left"></i> Back to Orders
     </a>
+    <a href="print-bill.php?id=<?php echo $orderId; ?>" 
+       target="_blank"
+       class="btn btn-outline-success float-end">
+        <i class="fas fa-print"></i> Print Bill
+    </a>
 </div>
 
 <div class="row g-4">

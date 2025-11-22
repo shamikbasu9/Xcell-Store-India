@@ -5,8 +5,7 @@ require_once 'includes/header.php';
 $cartItems = getCartItems();
 $subtotal = getCartTotal();
 $shipping = calculateShipping($subtotal);
-$tax = calculateTax($subtotal);
-$total = $subtotal + $shipping + $tax;
+$total = $subtotal + $shipping;
 ?>
 
 <div class="container my-4">
@@ -103,11 +102,6 @@ $total = $subtotal + $shipping + $tax;
                                 <small>Add <?php echo formatCurrency(FREE_SHIPPING_ABOVE - $subtotal); ?> more for free shipping!</small>
                             </div>
                         <?php endif; ?>
-                        
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Tax (<?php echo TAX_RATE; ?>%)</span>
-                            <span><?php echo formatCurrency($tax); ?></span>
-                        </div>
                         
                         <hr>
                         

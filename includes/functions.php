@@ -16,7 +16,8 @@ function generateOrderNumber() {
 }
 
 function formatCurrency($amount) {
-    return '₹' . number_format($amount, 2);
+    $amount = $amount ?? 0;
+    return '₹' . number_format((float)$amount, 2);
 }
 
 function calculateDiscountPercentage($originalPrice, $discountPrice) {
@@ -30,10 +31,6 @@ function getProductPrice($product) {
     return !empty($product['discount_price']) && $product['discount_price'] < $product['price'] 
         ? $product['discount_price'] 
         : $product['price'];
-}
-
-function calculateTax($amount) {
-    return ($amount * TAX_RATE) / 100;
 }
 
 function calculateShipping($subtotal) {

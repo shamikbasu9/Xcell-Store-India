@@ -202,6 +202,20 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
             background: #2d2d2d;
         }
         
+        /* Fix muted text in dark mode */
+        [data-mdb-theme="dark"] .text-muted {
+            color: #adb5bd !important;
+        }
+        
+        /* Fix background containers in dark mode */
+        [data-mdb-theme="dark"] .container {
+            background-color: transparent !important;
+        }
+        
+        [data-mdb-theme="dark"] .card {
+            background-color: #2d2d2d !important;
+        }
+        
         /* Dropdown Styles */
         .dropdown-menu {
             border-radius: 8px;

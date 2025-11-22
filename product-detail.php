@@ -206,6 +206,18 @@ $conn->close();
 </div>
 
 <script>
+// Initialize MDB carousel
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize carousel if it exists
+    const carouselElement = document.getElementById('productCarousel');
+    if (carouselElement) {
+        new mdb.Carousel(carouselElement, {
+            interval: 5000,
+            ride: 'carousel'
+        });
+    }
+});
+
 function addToCart(productId) {
     const quantity = document.getElementById('quantity').value;
     fetch('cart-action.php', {

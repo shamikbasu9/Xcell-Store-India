@@ -131,6 +131,12 @@ $conn->close();
                                        title="View Details">
                                         <i class="fas fa-eye"></i>
                                     </a>
+                                    <a href="print-bill.php?id=<?php echo $order['id']; ?>" 
+                                       target="_blank"
+                                       class="btn btn-sm btn-outline-success"
+                                       title="Print Bill">
+                                        <i class="fas fa-print"></i>
+                                    </a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
