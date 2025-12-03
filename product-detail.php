@@ -57,7 +57,7 @@ $conn->close();
             <?php if ($product['category_name']): ?>
                 <li class="breadcrumb-item"><a href="products.php?category=<?php echo $product['category_id']; ?>"><?php echo htmlspecialchars($product['category_name']); ?></a></li>
             <?php endif; ?>
-            <li class="breadcrumb-item active"><?php echo htmlspecialchars($product['title']); ?></li>
+            <li class="breadcrumb-item active"><?php echo displayTitle($product['title']); ?></li>
         </ol>
     </nav>
     
@@ -72,8 +72,8 @@ $conn->close();
                                 <?php foreach ($images as $index => $image): ?>
                                     <div class="carousel-item <?php echo $index === 0 ? 'active' : ''; ?>">
                                         <img src="uploads/products/<?php echo htmlspecialchars($image['image_path']); ?>" 
-                                             class="d-block w-100" style="height: 500px; object-fit: cover;" 
-                                             alt="<?php echo htmlspecialchars($product['title']); ?>">
+                                             class="d-block w-100" style="height: 500px; object-fit: contain;" 
+                                             alt="<?php echo displayTitle($product['title']); ?>">
                                     </div>
                                 <?php endforeach; ?>
                             </div>
@@ -103,7 +103,7 @@ $conn->close();
                         <span class="badge bg-success mb-2"><?php echo htmlspecialchars($product['category_name']); ?></span>
                     <?php endif; ?>
                     
-                    <h2 class="fw-bold mb-3"><?php echo htmlspecialchars($product['title']); ?></h2>
+                    <h2 class="fw-bold mb-3"><?php echo displayTitle($product['title']); ?></h2>
                     
                     <div class="mb-3">
                         <?php if (!empty($product['discount_price']) && $product['discount_price'] < $product['price']): ?>
@@ -183,7 +183,7 @@ $conn->close();
                             <div class="card-body">
                                 <h6 class="card-title fw-bold">
                                     <a href="product-detail.php?id=<?php echo $related['id']; ?>" class="text-decoration-none text-dark">
-                                        <?php echo htmlspecialchars($related['title']); ?>
+                                        <?php echo displayTitle($related['title']); ?>
                                     </a>
                                 </h6>
                                 <?php if (!empty($related['discount_price']) && $related['discount_price'] < $related['price']): ?>

@@ -32,7 +32,7 @@ $total = $subtotal + $shipping;
                                 <div class="col-3 col-md-2">
                                     <?php if ($item['image_path']): ?>
                                         <img src="uploads/products/<?php echo htmlspecialchars($item['image_path']); ?>" 
-                                             class="img-fluid rounded" alt="<?php echo htmlspecialchars($item['title']); ?>">
+                                             class="img-fluid rounded" alt="<?php echo displayTitle($item['title']); ?>">
                                     <?php else: ?>
                                         <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 80px;">
                                             <i class="fas fa-leaf fa-2x text-muted"></i>
@@ -43,8 +43,7 @@ $total = $subtotal + $shipping;
                                 <div class="col-5 col-md-4">
                                     <h6 class="fw-bold mb-1">
                                         <a href="product-detail.php?id=<?php echo $item['id']; ?>" class="text-decoration-none text-dark">
-                                            <?php echo htmlspecialchars($item['title']); ?>
-                                        </a>
+                                            <small><?php echo displayTitle($item['title']); ?> x<?php echo $item['quantity']; ?></small>                                     </a>
                                     </h6>
                                     <?php if (!empty($item['discount_price']) && $item['discount_price'] < $item['price']): ?>
                                         <div>

@@ -212,11 +212,16 @@ function getPaymentStatusClass($status) {
 }
 
 function timeAgo($datetime) {
-    $diff = time() - strtotime($datetime);
-    if ($diff < 60) return 'just now';
-    if ($diff < 3600) return floor($diff / 60) . ' min ago';
-    if ($diff < 86400) return floor($diff / 3600) . ' hours ago';
-    if ($diff < 604800) return floor($diff / 86400) . ' days ago';
-    return date('M d, Y', strtotime($datetime));
+    $time = time() - strtotime($datetime);
+    $units = array('second' => 60, 'minute' => 60, 'hour' => 24, 'day' => 7, 'week' => 4.35, 'month' => 12);
+    foreach ($units as $unit => $value) {
+        if ($time < $value) return $time . ' ' . $unit . ($time == 1 ? '' : 's') . ' ago';
+        $time = round($time / $value);
+    }
+    return $time . ' years ago';
 }
-?>
+
+function displayTitle($title) {
+    return htmlspecialchars(html_entity_decode($title, ENT_QUOTES | ENT_HTML5, 'UTF-8'), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+}
+// No closing PHP tag to prevent whitespace issues

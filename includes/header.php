@@ -1,10 +1,23 @@
 <?php
+// Start output buffering at the very beginning
+if (!headers_sent()) {
+    ob_start();
+}
+
+// Include configuration and functions
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/functions.php';
 
+// Process any session or user-related logic
 $currentUser = getCurrentUser();
 $cartCount = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
+
+// If we need to redirect, do it before any output
+if (strpos($_SERVER['PHP_SELF'], 'admin/') !== false && !isAdminLoggedIn()) {
+    header('Location: ' . SITE_URL . '/admin/login.php');
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en" data-mdb-theme="light">
@@ -159,6 +172,106 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
         .product-card img {
             height: 250px;
             object-fit: cover;
+            width: 100%
+        }
+        
+        /* Futuristic Carousel Arrows */
+        .carousel-control-prev,
+        .carousel-control-next {
+            background: rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(10px);
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            top: 50%;
+            transform: translateY(-50%) scale(1);
+            opacity: 0.9;
+            margin: 0 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1), 
+                        0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+                        0 0 15px rgba(46, 125, 50, 0.3);
+        }
+        
+        .carousel-control-prev {
+            left: 0;
+        }
+        
+        .carousel-control-next {
+            right: 0;
+        }
+        
+        .carousel-control-prev:hover,
+        .carousel-control-next:hover {
+            transform: translateY(-50%) scale(1.1);
+            background: rgba(255, 255, 255, 0.15) !important;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15), 
+                        0 0 0 1px rgba(255, 255, 255, 0.2) inset,
+                        0 0 20px rgba(46, 125, 50, 0.5);
+        }
+        
+        .carousel-control-prev:active,
+        .carousel-control-next:active {
+            transform: translateY(-50%) scale(0.95);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1), 
+                        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+        }
+        
+        .carousel-control-prev-icon,
+        .carousel-control-next-icon {
+            background-image: none;
+            position: relative;
+            width: 1.5rem;
+            height: 1.5rem;
+            filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
+        }
+
+        .carousel-control-prev-icon:after,
+        .carousel-control-next-icon:after {
+            display: none;
+        }
+        
+        .carousel-control-prev-icon:before,
+        .carousel-control-next-icon:before {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-top: 3px solid #2e7d32;
+            border-right: 3px solid #2e7d32;
+            top: 50%;
+            left: 50%;
+            transform: translate(-30%, -50%) rotate(-135deg);
+            transition: all 0.3s ease;
+        }
+        
+        .carousel-control-next-icon:before {
+            transform: translate(-70%, -50%) rotate(45deg);
+        }
+        
+        /* Dark Mode Adjustments */
+        [data-mdb-theme="dark"] .carousel-control-prev,
+        [data-mdb-theme="dark"] .carousel-control-next {
+            background: rgba(0, 0, 0, 0.3) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2), 
+                        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+                        0 0 15px rgba(46, 125, 50, 0.4);
+        }
+        
+        [data-mdb-theme="dark"] .carousel-control-prev:hover,
+        [data-mdb-theme="dark"] .carousel-control-next:hover {
+            background: rgba(0, 0, 0, 0.4) !important;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 
+                        0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+                        0 0 20px rgba(46, 125, 50, 0.6);
+        }
+        
+        [data-mdb-theme="dark"] .carousel-control-prev-icon:before,
+        [data-mdb-theme="dark"] .carousel-control-next-icon:before {
+            border-color: #66bb6a;
+            filter: drop-shadow(0 0 3px rgba(102, 187, 106, 0.5));
         }
         
         /* Buttons */

@@ -130,10 +130,10 @@ $conn->close();
                                         <div class="d-flex align-items-center">
                                             <?php if ($item['image_path']): ?>
                                                 <img src="../uploads/products/<?php echo htmlspecialchars($item['image_path']); ?>" 
-                                                     alt="Product" class="rounded me-2" style="width: 50px; height: 50px; object-fit: cover;">
+                                                     alt="Product" class="rounded me-2" style="width: 50px; height: 50px; object-fit: contain;">
                                             <?php endif; ?>
                                             <div>
-                                                <strong><?php echo htmlspecialchars($item['product_title']); ?></strong>
+                                                <strong><?php echo displayTitle($item['product_title']); ?></strong>
                                                 <?php if ($item['slug']): ?>
                                                     <br><small><a href="../product-detail.php?slug=<?php echo $item['slug']; ?>" target="_blank">View Product</a></small>
                                                 <?php endif; ?>

@@ -124,22 +124,13 @@ $conn->close();
                         </div>
                     <?php endif; ?>
                     
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="radio" name="payment_method" id="razorpay" value="razorpay" checked>
-                        <label class="form-check-label" for="razorpay">
-                            <i class="fas fa-mobile-alt text-primary"></i> UPI Payment (Google Pay, PhonePe, Paytm)
-                            <?php if (RAZORPAY_TEST_MODE): ?>
-                                <span class="badge bg-warning text-dark">TEST</span>
-                            <?php endif; ?>
-                        </label>
+                    <div class="alert alert-info">
+                        <i class="fas fa-mobile-alt me-2"></i> Secure payment via UPI (Google Pay, PhonePe, Paytm)
+                        <?php if (RAZORPAY_TEST_MODE): ?>
+                            <span class="badge bg-warning text-dark ms-2">TEST MODE</span>
+                        <?php endif; ?>
                     </div>
-                    
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="radio" name="payment_method" id="cod" value="cod">
-                        <label class="form-check-label" for="cod">
-                            <i class="fas fa-money-bill-wave text-success"></i> Cash on Delivery
-                        </label>
-                    </div>
+                    <input type="hidden" name="payment_method" value="razorpay">
                 </div>
             </div>
         </div>
@@ -272,12 +263,8 @@ async function placeOrder() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            if (paymentMethod.value === 'cod') {
-                window.location.href = 'order-success.php?order=' + data.order_id;
-            } else if (paymentMethod.value === 'razorpay') {
-                // Create Razorpay order first
-                createRazorpayOrder(data.order_id, data.order_number, data.order_amount);
-            }
+            // Create Razorpay order
+            createRazorpayOrder(data.order_id, data.order_number, data.order_amount);
         } else {
             alert(data.message || 'Failed to place order');
             btn.disabled = false;

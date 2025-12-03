@@ -166,7 +166,7 @@ $conn->close();
                                 <a href="product-detail.php?id=<?php echo $product['id']; ?>">
                                     <?php if ($product['image_path']): ?>
                                         <img src="uploads/products/<?php echo htmlspecialchars($product['image_path']); ?>" 
-                                             class="card-img-top" alt="<?php echo htmlspecialchars($product['title']); ?>">
+                                             alt="<?php echo displayTitle($product['title']); ?>">
                                     <?php else: ?>
                                         <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 250px;">
                                             <i class="fas fa-leaf fa-4x text-muted"></i>
@@ -182,7 +182,7 @@ $conn->close();
                                     <h6 class="card-title fw-bold">
                                         <a href="product-detail.php?id=<?php echo $product['id']; ?>" 
                                            class="text-decoration-none text-dark">
-                                            <?php echo htmlspecialchars($product['title']); ?>
+                                            <?php echo displayTitle($product['title']); ?>
                                         </a>
                                     </h6>
                                     
