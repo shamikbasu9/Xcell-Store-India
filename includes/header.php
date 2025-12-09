@@ -26,6 +26,43 @@ if (strpos($_SERVER['PHP_SELF'], 'admin/') !== false && !isAdminLoggedIn()) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle ?? 'Xcell Store India'; ?> - Plant Store</title>
     
+    <!-- Open Graph / Social Media Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="<?php echo (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']; ?>">
+    <meta property="og:title" content="<?php echo isset($product['title']) ? htmlspecialchars($product['title']) : 'Xcell Store India - Premium Plants'; ?>">
+    <meta property="og:description" content="<?php 
+        if (isset($product['description'])) {
+            // Clean up the description for meta tags
+            $desc = strip_tags($product['description']);
+            $desc = str_replace(["\r", "\n"], ' ', $desc);
+            echo htmlspecialchars(substr($desc, 0, 200) . (strlen($desc) > 200 ? '...' : ''));
+        } else {
+            echo 'Discover beautiful plants at Xcell Store India. High-quality plants delivered to your doorstep.';
+        }
+    ?>">
+    <meta property="og:site_name" content="Xcell Store India">
+    
+    <?php if (isset($product) && !empty($images[0]['image_path'])): ?>
+        <meta property="og:image" content="<?php echo (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . '/uploads/products/' . $images[0]['image_path']; ?>">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta name="twitter:card" content="summary_large_image">
+    <?php else: ?>
+        <meta property="og:image" content="<?php echo (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']; ?>/assets/images/logo.jpg">
+    <?php endif; ?>
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:title" content="<?php echo isset($product['title']) ? htmlspecialchars($product['title']) : 'Xcell Store India - Premium Plants'; ?>">
+    <meta name="twitter:description" content="<?php 
+        if (isset($product['description'])) {
+            $desc = strip_tags($product['description']);
+            $desc = str_replace(["\r", "\n"], ' ', $desc);
+            echo htmlspecialchars(substr($desc, 0, 200) . (strlen($desc) > 200 ? '...' : ''));
+        } else {
+            echo 'Discover beautiful plants at Xcell Store India. High-quality plants delivered to your doorstep.';
+        }
+    ?>">
+    
     <!-- MDBootstrap CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.1.0/mdb.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -203,6 +240,40 @@ if (strpos($_SERVER['PHP_SELF'], 'admin/') !== false && !isAdminLoggedIn()) {
         }
         
         .carousel-control-prev:hover,
+        /* Social sharing buttons */
+        .btn-share {
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            border-radius: 50% !important;
+            transition: all 0.2s;
+            border: 1px solid transparent !important;
+        }
+        .btn-share:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .btn-share i {
+            font-size: 1.1rem;
+        }
+        .btn-share.whatsapp {
+            background-color: #25D366 !important;
+            color: white !important;
+            border-color: #25D366 !important;
+        }
+        .btn-share.facebook {
+            background-color: #3b5998 !important;
+            color: white !important;
+            border-color: #3b5998 !important;
+        }
+        .btn-share.instagram {
+            background: linear-gradient(45deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D) !important;
+            color: white !important;
+            border: none !important;
+        }
         .carousel-control-next:hover {
             transform: translateY(-50%) scale(1.1);
             background: rgba(255, 255, 255, 0.15) !important;

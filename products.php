@@ -34,16 +34,16 @@ if ($maxPrice < 10000) {
 // Sorting
 switch ($sort) {
     case 'price_low':
-        $sql .= " ORDER BY p.price ASC";
+        $sql .= " ORDER BY p.stock_quantity > 0 DESC, p.price ASC";
         break;
     case 'price_high':
-        $sql .= " ORDER BY p.price DESC";
+        $sql .= " ORDER BY p.stock_quantity > 0 DESC, p.price DESC";
         break;
     case 'popular':
-        $sql .= " ORDER BY p.sales_count DESC";
+        $sql .= " ORDER BY p.stock_quantity > 0 DESC, p.sales_count DESC";
         break;
     default:
-        $sql .= " ORDER BY p.created_at DESC";
+        $sql .= " ORDER BY p.stock_quantity > 0 DESC, p.created_at DESC";
 }
 
 $result = $conn->query($sql);

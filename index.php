@@ -9,7 +9,7 @@ $featuredProducts = [];
 $result = $conn->query("SELECT p.*, pi.image_path FROM products p 
                         LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = TRUE 
                         WHERE p.is_featured = TRUE AND p.status = 'active' 
-                        ORDER BY p.sales_count DESC LIMIT 6");
+                        ORDER BY p.stock_quantity > 0 DESC, p.sales_count DESC LIMIT 6");
 while ($row = $result->fetch_assoc()) {
     $featuredProducts[] = $row;
 }
@@ -99,7 +99,7 @@ $conn->close();
                             <div class="card-body">
                                 <h6 class="card-title fw-bold">
                                     <a href="product-detail.php?id=<?php echo $product['id']; ?>" class="text-decoration-none text-dark">
-                                        <?php echo htmlspecialchars($product['title']); ?>
+                                        <?php echo displayTitle($product['title']); ?>
                                     </a>
                                 </h6>
                                 <?php if (!empty($product['discount_price']) && $product['discount_price'] < $product['price']): ?>

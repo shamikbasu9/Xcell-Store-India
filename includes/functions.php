@@ -222,6 +222,7 @@ function timeAgo($datetime) {
 }
 
 function displayTitle($title) {
-    return htmlspecialchars(html_entity_decode($title, ENT_QUOTES | ENT_HTML5, 'UTF-8'), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    // First decode any existing HTML entities, then escape special characters
+    return htmlspecialchars(html_entity_decode($title, ENT_QUOTES | ENT_HTML5, 'UTF-8'), ENT_QUOTES | ENT_HTML5, 'UTF-8', false);
 }
 // No closing PHP tag to prevent whitespace issues

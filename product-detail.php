@@ -1,6 +1,10 @@
 <?php
 require_once 'includes/header.php';
 
+// Make these variables global so they're available in header.php
+$product = [];
+$images = [];
+
 $productId = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 if ($productId <= 0) {
@@ -19,6 +23,9 @@ $stmt->execute();
 $product = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
+// Set the page title for the header
+$pageTitle = $product ? $product['title'] : 'Product Not Found';
+
 if (!$product) {
     header('Location: products.php');
     exit;
@@ -30,12 +37,58 @@ $pageTitle = $product['title'];
 $conn->query("UPDATE products SET views = views + 1 WHERE id = $productId");
 
 // Get images
-$images = [];
 $result = $conn->query("SELECT * FROM product_images WHERE product_id = $productId ORDER BY is_primary DESC, display_order");
 while ($row = $result->fetch_assoc()) {
     $images[] = $row;
 }
 
+// Prepare social sharing data
+$shareUrl = 'https://' . $_SERVER['HTTP_HOST'] . strtok($_SERVER['REQUEST_URI'], '?'); // Force HTTPS and remove existing query params
+$shareTitle = htmlspecialchars($product['title']);
+$shareDescription = htmlspecialchars(substr(strip_tags($product['description']), 0, 155));
+$shareImage = !empty($images[0]['image_path']) ? 
+    'https://' . $_SERVER['HTTP_HOST'] . '/uploads/products/' . $images[0]['image_path'] : 
+    'https://' . $_SERVER['HTTP_HOST'] . '/assets/images/logo.jpg';
+$sharePrice = formatCurrency(!empty($product['discount_price']) && $product['discount_price'] < $product['price'] ? $product['discount_price'] : $product['price']);
+$siteName = defined('SITE_NAME') ? SITE_NAME : 'Plant Store';
+
+// Generate cache-busting parameter
+$cacheBuster = '?v=' . time();
+
+// Set the page title
+$pageTitle = $shareTitle . ' - ' . $siteName;
+?>
+
+<!-- Primary Meta Tags -->
+<title><?php echo $pageTitle; ?></title>
+<meta name="description" content="<?php echo $shareDescription; ?>">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="product">
+<meta property="og:url" content="<?php echo $shareUrl . $cacheBuster; ?>">
+<meta property="og:title" content="<?php echo $shareTitle; ?>">
+<meta property="og:description" content="<?php echo $shareDescription; ?>">
+<meta property="og:image" content="<?php echo $shareImage . $cacheBuster; ?>">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="<?php echo $siteName; ?>">
+<meta property="product:price:amount" content="<?php echo !empty($product['discount_price']) ? $product['discount_price'] : $product['price']; ?>">
+<meta property="product:price:currency" content="INR">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="<?php echo $shareUrl . $cacheBuster; ?>">
+<meta name="twitter:title" content="<?php echo $shareTitle; ?>">
+<meta name="twitter:description" content="<?php echo $shareDescription; ?>">
+<meta name="twitter:image" content="<?php echo $shareImage . $cacheBuster; ?>">
+<meta name="twitter:image:alt" content="<?php echo $shareTitle; ?>">
+
+<!-- WhatsApp Specific -->
+<meta property="og:image:secure_url" content="<?php echo $shareImage . $cacheBuster; ?>">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:alt" content="<?php echo $shareTitle; ?>">
+
+<?php
 // Get related products
 $relatedProducts = [];
 $result = $conn->query("SELECT p.*, pi.image_path FROM products p 
@@ -60,6 +113,58 @@ $conn->close();
             <li class="breadcrumb-item active"><?php echo displayTitle($product['title']); ?></li>
         </ol>
     </nav>
+    
+    <!-- Share Options at Top -->
+    <div class="card mb-4 border-success shadow-sm">
+        <div class="card-body py-3">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fas fa-share-alt text-success fs-5"></i>
+                    <span class="fw-bold text-dark d-none d-sm-inline">Share:</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <?php
+                    $whatsappText = "🌿 *" . $shareTitle . "*\n\n" . $shareDescription . "\n\n💰 Price: " . $sharePrice . "\n\n🔗 " . $shareUrl . $cacheBuster;
+                    $encodedText = urlencode($whatsappText);
+                    ?>
+                    <!-- WhatsApp -->
+                    <a href="https://api.whatsapp.com/send?text=<?php echo $encodedText; ?>" 
+                       class="btn btn-success rounded-circle p-2 d-flex align-items-center justify-content-center" 
+                       style="width: 40px; height: 40px;"
+                       target="_blank" 
+                       title="Share on WhatsApp">
+                        <i class="fab fa-whatsapp"></i>
+                    </a>
+                    
+                    <!-- Facebook -->
+                    <a href="https://www.facebook.com/sharer/sharer.php?u=<?php echo urlencode($shareUrl . $cacheBuster); ?>" 
+                       class="btn btn-primary rounded-circle p-2 d-flex align-items-center justify-content-center" 
+                       style="width: 40px; height: 40px;"
+                       target="_blank" 
+                       title="Share on Facebook">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    
+                    <!-- Twitter -->
+                    <a href="https://twitter.com/intent/tweet?url=<?php echo urlencode($shareUrl . $cacheBuster); ?>&text=<?php echo urlencode($shareTitle); ?>" 
+                       class="btn btn-info rounded-circle p-2 d-flex align-items-center justify-content-center text-white" 
+                       style="width: 40px; height: 40px; background-color: #1DA1F2;"
+                       target="_blank" 
+                       title="Share on Twitter">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    
+                    <!-- Copy Link -->
+                    <button onclick="copyToClipboard('<?php echo $shareUrl; ?>')
+                            class="btn btn-secondary rounded-circle p-2 d-flex align-items-center justify-content-center" 
+                            style="width: 40px; height: 40px;"
+                            title="Copy Link">
+                        <i class="fas fa-link"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <div class="row g-4">
         <!-- Product Images -->
@@ -126,14 +231,14 @@ $conn->close();
                     <?php if ($product['description']): ?>
                         <div class="mb-4">
                             <h5 class="fw-bold mb-2">Description</h5>
-                            <p class="text-muted"><?php echo nl2br(htmlspecialchars($product['description'])); ?></p>
+                            <p class="text-muted"><?php echo nl2br(htmlspecialchars(html_entity_decode($product['description'], ENT_QUOTES | ENT_HTML5, 'UTF-8'), ENT_QUOTES | ENT_HTML5, 'UTF-8', false)); ?></p>
                         </div>
                     <?php endif; ?>
                     
                     <?php if ($product['care_instructions']): ?>
                         <div class="mb-4">
                             <h5 class="fw-bold mb-2"><i class="fas fa-info-circle text-success"></i> Care Instructions</h5>
-                            <p class="text-muted"><?php echo nl2br(htmlspecialchars($product['care_instructions'])); ?></p>
+                            <p class="text-muted"><?php echo nl2br(htmlspecialchars(html_entity_decode($product['care_instructions'], ENT_QUOTES | ENT_HTML5, 'UTF-8'), ENT_QUOTES | ENT_HTML5, 'UTF-8', false)); ?></p>
                         </div>
                     <?php endif; ?>
                     
@@ -206,7 +311,53 @@ $conn->close();
 </div>
 
 <script>
-// Initialize MDB carousel
+// Copy to clipboard function with modern approach
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        // You can replace this with a toast notification if you have one
+        const originalText = event.target.innerHTML;
+        event.target.innerHTML = '<i class="fas fa-check"></i>';
+        event.target.title = 'Copied!';
+        
+        // Revert back after 2 seconds
+        setTimeout(() => {
+            event.target.innerHTML = originalText;
+            event.target.title = 'Copy Link';
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy text: ', err);
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            event.target.innerHTML = '<i class="fas fa-check"></i>';
+            event.target.title = 'Copied!';
+            
+            setTimeout(() => {
+                event.target.innerHTML = '<i class="fas fa-link"></i>';
+                event.target.title = 'Copy Link';
+            }, 2000);
+        } catch (err) {
+            console.error('Fallback copy failed: ', err);
+            alert('Failed to copy link. Please try again.');
+        }
+        
+        document.body.removeChild(textArea);
+    });
+}
+
+// Social Sharing Functions
+function shareOnWhatsApp(text, url, imageUrl) {
+    // Open WhatsApp with the text and URL
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text + '\n\n' + url)}`;
+    window.open(whatsappUrl, '_blank');
+}
+
+// Initialize MDB carousel and sharing buttons
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize carousel if it exists
     const carouselElement = document.getElementById('productCarousel');
@@ -216,6 +367,17 @@ document.addEventListener('DOMContentLoaded', function() {
             ride: 'carousel'
         });
     }
+    
+    // Initialize WhatsApp sharing
+    document.querySelectorAll('.share-whatsapp').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const text = this.getAttribute('data-share-text');
+            const url = this.getAttribute('data-share-url');
+            const image = this.getAttribute('data-share-image');
+            shareOnWhatsApp(text, url, image);
+        });
+    });
 });
 
 function addToCart(productId) {
