@@ -162,6 +162,7 @@ function addToCart(productId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            alert('Added to cart!')
             location.reload();
         } else {
             alert(data.message || 'Failed to add to cart');
