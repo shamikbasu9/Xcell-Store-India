@@ -43,7 +43,8 @@ $total = $subtotal + $shipping;
                                 <div class="col-5 col-md-4">
                                     <h6 class="fw-bold mb-1">
                                         <a href="product-detail.php?id=<?php echo $item['id']; ?>" class="text-decoration-none text-dark">
-                                            <small><?php echo displayTitle($item['title']); ?> x<?php echo $item['quantity']; ?></small>                                     </a>
+                                            <small><?php echo displayTitle($item['title']); ?> x<?php echo $item['quantity']; ?></small>
+                                        </a>
                                     </h6>
                                     <?php if (!empty($item['discount_price']) && $item['discount_price'] < $item['price']): ?>
                                         <div>
@@ -57,15 +58,24 @@ $total = $subtotal + $shipping;
                                 
                                 <div class="col-4 col-md-3">
                                     <div class="input-group input-group-sm">
-                                        <button class="btn btn-outline-secondary" onclick="updateQuantity(<?php echo $item['id']; ?>, <?php echo $item['quantity'] - 1; ?>)">
+                                        <button class="btn btn-outline-secondary" 
+                                                onclick="updateQuantity(<?php echo $item['id']; ?>, <?php echo $item['quantity'] - 1; ?>, <?php echo $item['stock_quantity']; ?>)">
                                             <i class="fas fa-minus"></i>
                                         </button>
-                                        <input type="number" class="form-control text-center" value="<?php echo $item['quantity']; ?>" 
-                                               min="1" max="<?php echo $item['stock_quantity']; ?>" readonly>
-                                        <button class="btn btn-outline-secondary" onclick="updateQuantity(<?php echo $item['id']; ?>, <?php echo $item['quantity'] + 1; ?>)">
+                                        <input type="number" class="form-control text-center" 
+                                               value="<?php echo $item['quantity']; ?>" 
+                                               min="1" 
+                                               max="<?php echo $item['stock_quantity']; ?>" 
+                                               readonly>
+                                        <button class="btn btn-outline-secondary" 
+                                                onclick="updateQuantity(<?php echo $item['id']; ?>, <?php echo $item['quantity'] + 1; ?>, <?php echo $item['stock_quantity']; ?>)"
+                                                <?php echo ($item['quantity'] >= $item['stock_quantity']) ? 'disabled' : ''; ?>>
                                             <i class="fas fa-plus"></i>
                                         </button>
                                     </div>
+                                    <?php if ($item['quantity'] >= $item['stock_quantity']): ?>
+                                        <small class="text-muted d-block mt-1">Max available</small>
+                                    <?php endif; ?>
                                 </div>
                                 
                                 <div class="col-12 col-md-3 text-end mt-2 mt-md-0">
@@ -125,12 +135,20 @@ $total = $subtotal + $shipping;
 </div>
 
 <script>
-function updateQuantity(productId, quantity) {
+function updateQuantity(productId, quantity, maxStock) {
+    // Check if quantity is below 1
     if (quantity < 1) {
         if (!confirm('Remove this item from cart?')) return;
         quantity = 0;
     }
     
+    // Validate against stock limit
+    if (quantity > maxStock) {
+        alert(`Only ${maxStock} items available in stock`);
+        return;
+    }
+    
+    // Send update request
     fetch('cart-action.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -143,6 +161,10 @@ function updateQuantity(productId, quantity) {
         } else {
             alert(data.message || 'Failed to update cart');
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while updating cart');
     });
 }
 
@@ -161,6 +183,10 @@ function removeFromCart(productId) {
         } else {
             alert(data.message || 'Failed to remove item');
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while removing item');
     });
 }
 </script>
