@@ -79,7 +79,6 @@ $total = $subtotal + $shipping;
                                 </div>
                                 
                                 <div class="col-12 col-md-3 text-end mt-2 mt-md-0">
-                                    <p class="fw-bold mb-2"><?php echo formatCurrency($item['price'] * $item['quantity']); ?></p>
                                     <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(<?php echo $item['id']; ?>)">
                                         <i class="fas fa-trash"></i> Remove
                                     </button>
