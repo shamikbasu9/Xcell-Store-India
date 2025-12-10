@@ -204,9 +204,10 @@ $conn->close();
 
 <script>
 async function placeOrder() {
-    const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
+    // For hidden input, just get the value directly
+    const paymentMethod = document.querySelector('input[name="payment_method"]');
     
-    if (!paymentMethod) {
+    if (!paymentMethod || !paymentMethod.value) {
         alert('Please select a payment method');
         return;
     }
@@ -254,14 +255,31 @@ async function placeOrder() {
         }
     }
     
-    // Create order
-    fetch('process-order.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `payment_method=${paymentMethod.value}&address_id=${addressId}`
-    })
-    .then(response => response.json())
-    .then(data => {
+    // Create order with better error handling
+    try {
+        const response = await fetch('process-order.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: `payment_method=${paymentMethod.value}&address_id=${addressId}`
+        });
+        
+        // Get the response as text first to see what we're getting
+        const text = await response.text();
+        console.log('Raw response:', text);
+        
+        // Try to parse as JSON
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            console.error('JSON parse error:', e);
+            console.error('Response text:', text);
+            alert('Server returned an invalid response. Check console for details.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check"></i> Place Order';
+            return;
+        }
+        
         if (data.success) {
             // Create Razorpay order
             createRazorpayOrder(data.order_id, data.order_number, data.order_amount);
@@ -270,13 +288,12 @@ async function placeOrder() {
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-check"></i> Place Order';
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
+    } catch (error) {
+        console.error('Fetch error:', error);
         alert('An error occurred. Please try again.');
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-check"></i> Place Order';
-    });
+    }
 }
 
 function createRazorpayOrder(orderId, orderNumber, amount) {

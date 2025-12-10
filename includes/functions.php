@@ -37,6 +37,14 @@ function calculateShipping($subtotal) {
     return $subtotal >= FREE_SHIPPING_ABOVE ? 0 : SHIPPING_CHARGE;
 }
 
+function calculateTax($subtotal) {
+    // If you don't charge tax, return 0
+    return 0;
+    
+    // OR if you charge tax (e.g., 18% GST in India):
+    // return $subtotal * 0.18;
+}
+
 function isUserLoggedIn() {
     return isset($_SESSION['user_id']);
 }
