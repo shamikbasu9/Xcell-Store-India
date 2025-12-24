@@ -44,6 +44,7 @@ while ($row = $result->fetch_assoc()) {
 
 // Prepare social sharing data
 $shareUrl = 'https://' . $_SERVER['HTTP_HOST'] . strtok($_SERVER['REQUEST_URI'], '?'); // Force HTTPS and remove existing query params
+$shareUrl = $shareUrl . '?id=' . $productId; // Add product ID back
 $shareTitle = htmlspecialchars($product['title']);
 $shareDescription = htmlspecialchars(substr(strip_tags($product['description']), 0, 155));
 $shareImage = !empty($images[0]['image_path']) ? 
@@ -53,7 +54,7 @@ $sharePrice = formatCurrency(!empty($product['discount_price']) && $product['dis
 $siteName = defined('SITE_NAME') ? SITE_NAME : 'Plant Store';
 
 // Generate cache-busting parameter
-$cacheBuster = '?v=' . time();
+$cacheBuster = '&v=' . time(); // Use & instead of ? since we already have ?id=
 
 // Set the page title
 $pageTitle = $shareTitle . ' - ' . $siteName;
@@ -155,7 +156,7 @@ $conn->close();
                     </a>
                     
                     <!-- Copy Link -->
-                    <button onclick="copyToClipboard('<?php echo $shareUrl; ?>')
+                    <button onclick="copyToClipboard('<?php echo $shareUrl . $cacheBuster; ?>')"
                             class="btn btn-secondary rounded-circle p-2 d-flex align-items-center justify-content-center" 
                             style="width: 40px; height: 40px;"
                             title="Copy Link">
@@ -313,16 +314,18 @@ $conn->close();
 <script>
 // Copy to clipboard function with modern approach
 function copyToClipboard(text) {
+    const button = event.target.closest('button');
+    
     navigator.clipboard.writeText(text).then(() => {
         // You can replace this with a toast notification if you have one
-        const originalText = event.target.innerHTML;
-        event.target.innerHTML = '<i class="fas fa-check"></i>';
-        event.target.title = 'Copied!';
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i>';
+        button.title = 'Copied!';
         
         // Revert back after 2 seconds
         setTimeout(() => {
-            event.target.innerHTML = originalText;
-            event.target.title = 'Copy Link';
+            button.innerHTML = originalText;
+            button.title = 'Copy Link';
         }, 2000);
     }).catch(err => {
         console.error('Failed to copy text: ', err);
@@ -334,12 +337,13 @@ function copyToClipboard(text) {
         
         try {
             document.execCommand('copy');
-            event.target.innerHTML = '<i class="fas fa-check"></i>';
-            event.target.title = 'Copied!';
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check"></i>';
+            button.title = 'Copied!';
             
             setTimeout(() => {
-                event.target.innerHTML = '<i class="fas fa-link"></i>';
-                event.target.title = 'Copy Link';
+                button.innerHTML = originalText;
+                button.title = 'Copy Link';
             }, 2000);
         } catch (err) {
             console.error('Fallback copy failed: ', err);
