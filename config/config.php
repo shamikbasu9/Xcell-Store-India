@@ -9,7 +9,7 @@ define('ADMIN_EMAIL', 'admin@xcellstore.com');
 
 define('UPLOAD_DIR', __DIR__ . '/../uploads/');
 define('PRODUCT_IMAGES_DIR', UPLOAD_DIR . 'products/');
-define('MAX_FILE_SIZE', 10 * 1024 * 1024);
+define('MAX_FILE_SIZE', 100 * 1024 * 1024); // 100MB
 
 if (!file_exists(UPLOAD_DIR)) mkdir(UPLOAD_DIR, 0755, true);
 if (!file_exists(PRODUCT_IMAGES_DIR)) mkdir(PRODUCT_IMAGES_DIR, 0755, true);

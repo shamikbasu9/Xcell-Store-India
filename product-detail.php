@@ -92,12 +92,26 @@ $pageTitle = $shareTitle . ' - ' . $siteName;
 <?php
 // Get related products
 $relatedProducts = [];
-$result = $conn->query("SELECT p.*, pi.image_path FROM products p 
-                        LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = TRUE 
-                        WHERE p.category_id = {$product['category_id']} AND p.id != $productId AND p.status = 'active' 
-                        ORDER BY RAND() LIMIT 4");
-while ($row = $result->fetch_assoc()) {
-    $relatedProducts[] = $row;
+$query = "SELECT p.*, pi.image_path FROM products p 
+          LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = TRUE 
+          WHERE p.status = 'active' AND p.id != $productId";
+
+// Add category filter only if category_id is not null
+if (!empty($product['category_id'])) {
+    $query .= " AND p.category_id = " . intval($product['category_id']);
+}
+
+// Complete the query with ordering and limit
+$query .= " ORDER BY RAND() LIMIT 4";
+
+$result = $conn->query($query);
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $relatedProducts[] = $row;
+    }
+} else {
+    // Log the error for debugging
+    error_log("Error in related products query: " . $conn->error);
 }
 
 $conn->close();

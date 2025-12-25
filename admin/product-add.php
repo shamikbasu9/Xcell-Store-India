@@ -22,29 +22,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conn = getDBConnection();
         $slug = generateSlug($title);
         
+        // If category_id is 0, set it to NULL for the database
+        $categoryIdForDb = $categoryId > 0 ? $categoryId : null;
+        
+        // Prepare the statement with the correct parameter types
         $stmt = $conn->prepare("INSERT INTO products (title, slug, description, care_instructions, price, discount_price, category_id, stock_quantity, status, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("ssssddissi", $title, $slug, $description, $careInstructions, $price, $discountPrice, $categoryId, $stockQuantity, $status, $isFeatured);
+        
+        // Determine the parameter types based on whether category_id is NULL or not
+        $paramTypes = $categoryIdForDb === null ? "ssssddisss" : "ssssddissi";
+        
+        // Bind parameters
+        if ($categoryIdForDb === null) {
+            $stmt->bind_param($paramTypes, $title, $slug, $description, $careInstructions, $price, $discountPrice, $categoryIdForDb, $stockQuantity, $status, $isFeatured);
+        } else {
+            $stmt->bind_param($paramTypes, $title, $slug, $description, $careInstructions, $price, $discountPrice, $categoryId, $stockQuantity, $status, $isFeatured);
+        }
         
         if ($stmt->execute()) {
             $productId = $conn->insert_id;
             
-            // Handle image uploads
-            if (isset($_FILES['images']) && !empty($_FILES['images']['name'][0])) {
+            // Handle media uploads (images and videos)
+            if (isset($_FILES['media']) && !empty($_FILES['media']['name'][0])) {
                 $isPrimary = true;
-                foreach ($_FILES['images']['tmp_name'] as $key => $tmpName) {
-                    if ($_FILES['images']['error'][$key] === UPLOAD_ERR_OK) {
-                        $imageFile = [
-                            'name' => $_FILES['images']['name'][$key],
-                            'type' => $_FILES['images']['type'][$key],
+                foreach ($_FILES['media']['tmp_name'] as $key => $tmpName) {
+                    if ($_FILES['media']['error'][$key] === UPLOAD_ERR_OK) {
+                        $mediaFile = [
+                            'name' => $_FILES['media']['name'][$key],
+                            'type' => $_FILES['media']['type'][$key],
                             'tmp_name' => $tmpName,
-                            'error' => $_FILES['images']['error'][$key],
-                            'size' => $_FILES['images']['size'][$key]
+                            'error' => $_FILES['media']['error'][$key],
+                            'size' => $_FILES['media']['size'][$key]
                         ];
                         
-                        $upload = uploadFile($imageFile, PRODUCT_IMAGES_DIR);
+                        // Determine media type based on file extension
+                        $fileExtension = strtolower(pathinfo($mediaFile['name'], PATHINFO_EXTENSION));
+                        $isVideo = in_array($fileExtension, ['mp4', 'webm', 'ogg', 'mov']);
+                        $mediaType = $isVideo ? 'video' : 'image';
+                        
+                        // Set appropriate upload directory based on media type
+                        $uploadDir = $isVideo ? (defined('PRODUCT_VIDEOS_DIR') ? PRODUCT_VIDEOS_DIR : PRODUCT_IMAGES_DIR) : PRODUCT_IMAGES_DIR;
+                        
+                        $upload = uploadFile($mediaFile, $uploadDir);
                         if ($upload['success']) {
-                            $stmt = $conn->prepare("INSERT INTO product_images (product_id, image_path, is_primary, display_order) VALUES (?, ?, ?, ?)");
-                            $stmt->bind_param("isii", $productId, $upload['filename'], $isPrimary, $key);
+                            $stmt = $conn->prepare("INSERT INTO product_images (product_id, image_path, media_type, is_primary, display_order) VALUES (?, ?, ?, ?, ?)");
+                            $stmt->bind_param("issii", $productId, $upload['filename'], $mediaType, $isPrimary, $key);
                             $stmt->execute();
                             $isPrimary = false;
                         }
@@ -106,9 +127,9 @@ $conn->close();
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">Product Images</label>
-                        <input type="file" class="form-control" name="images[]" accept="image/*" multiple>
-                        <small class="text-muted">First image will be the primary image</small>
+                        <label class="form-label">Product Media (Images & Videos)</label>
+                        <input type="file" class="form-control" name="media[]" accept="image/*,video/*" multiple>
+                        <small class="text-muted">First file will be the primary media. Supported formats: JPG, PNG, GIF, MP4, WebM, OGG, MOV</small>
                     </div>
                 </div>
                 

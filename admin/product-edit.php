@@ -58,72 +58,126 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $slug = generateSlug($title);
         
+        // If category_id is 0, set it to NULL for the database
+        $categoryIdForDb = $categoryId > 0 ? $categoryId : null;
+        
+        // Prepare the statement with the correct parameter types
         $stmt = $conn->prepare("UPDATE products SET title = ?, slug = ?, description = ?, care_instructions = ?, price = ?, discount_price = ?, category_id = ?, stock_quantity = ?, status = ?, is_featured = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
-        $stmt->bind_param("ssssddissii", $title, $slug, $description, $careInstructions, $price, $discountPrice, $categoryId, $stockQuantity, $status, $isFeatured, $productId);
+        
+        // Determine the parameter types based on whether category_id is NULL or not
+        $paramTypes = $categoryIdForDb === null ? "ssssddisssi" : "ssssddissii";
+        
+        // Bind parameters
+        if ($categoryIdForDb === null) {
+            $stmt->bind_param($paramTypes, $title, $slug, $description, $careInstructions, $price, $discountPrice, $categoryIdForDb, $stockQuantity, $status, $isFeatured, $productId);
+        } else {
+            $stmt->bind_param($paramTypes, $title, $slug, $description, $careInstructions, $price, $discountPrice, $categoryId, $stockQuantity, $status, $isFeatured, $productId);
+        }
         
         // Debug: Log the SQL and parameters
         error_log("SQL UPDATE - is_featured value being set: " . $isFeatured);
         
         if ($stmt->execute()) {
-            // Handle new image uploads
-            if (isset($_FILES['images']) && !empty($_FILES['images']['name'][0])) {
-                error_log("Image upload detected - files: " . print_r($_FILES['images'], true));
+            // Handle new media uploads (images and videos)
+            if (isset($_FILES['media']) && !empty($_FILES['media']['name'][0])) {
+                error_log("Media upload detected - files: " . print_r($_FILES['media'], true));
                 
-                // Debug: Count existing images before upload
+                // Debug: Count existing media before upload
                 $existingCount = count($images);
                 
-                // Re-fetch images to ensure we have the latest state
-                $currentImages = [];
+                // Re-fetch media to ensure we have the latest state
+                $currentMedia = [];
                 $stmt = $conn->prepare("SELECT * FROM product_images WHERE product_id = ? ORDER BY is_primary DESC, display_order");
                 $stmt->bind_param("i", $productId);
                 $stmt->execute();
                 $result = $stmt->get_result();
                 while ($row = $result->fetch_assoc()) {
-                    $currentImages[] = $row;
+                    $currentMedia[] = $row;
                 }
                 $stmt->close();
                 
-                // Debug: Log current image count
-                error_log("Product ID: {$productId}, Existing images: {$existingCount}, Current images from DB: " . count($currentImages));
+                // Debug: Log current media count
+                error_log("Product ID: {$productId}, Existing media: {$existingCount}, Current media from DB: " . count($currentMedia));
                 
                 $maxOrder = 0;
-                if (!empty($currentImages)) {
-                    $maxOrder = max(array_column($currentImages, 'display_order'));
+                if (!empty($currentMedia)) {
+                    $maxOrder = (int) max(array_column($currentMedia, 'display_order'));
                 }
                 
                 $uploadedCount = 0;
-                foreach ($_FILES['images']['tmp_name'] as $key => $tmpName) {
-                    error_log("Processing file {$key}: error={$_FILES['images']['error'][$key]}, tmp_name={$tmpName}");
-                    if ($_FILES['images']['error'][$key] === UPLOAD_ERR_OK) {
-                        $imageFile = [
-                            'name' => $_FILES['images']['name'][$key],
-                            'type' => $_FILES['images']['type'][$key],
+                $newMediaCount = count(array_filter($_FILES['media']['name']));
+                error_log("New files to upload: " . $newMediaCount);
+                foreach ($_FILES['media']['tmp_name'] as $key => $tmpName) {
+                    error_log("Processing file {$key}: error={$_FILES['media']['error'][$key]}, tmp_name={$tmpName}");
+                    if ($_FILES['media']['error'][$key] === UPLOAD_ERR_OK) {
+                        $mediaFile = [
+                            'name' => $_FILES['media']['name'][$key],
+                            'type' => $_FILES['media']['type'][$key],
                             'tmp_name' => $tmpName,
-                            'error' => $_FILES['images']['error'][$key],
-                            'size' => $_FILES['images']['size'][$key]
+                            'error' => $_FILES['media']['error'][$key],
+                            'size' => $_FILES['media']['size'][$key]
                         ];
                         
-                        error_log("Attempting to upload file: " . $imageFile['name']);
-                        $upload = uploadFile($imageFile, PRODUCT_IMAGES_DIR);
+                        // Determine media type based on file extension
+                        $fileExtension = strtolower(pathinfo($mediaFile['name'], PATHINFO_EXTENSION));
+                        $isVideo = in_array($fileExtension, ['mp4', 'webm', 'ogg', 'mov']);
+                        $mediaType = $isVideo ? 'video' : 'image';
+                        
+                        // Set appropriate upload directory based on media type
+                        if ($isVideo) {
+                            if (!defined('PRODUCT_VIDEOS_DIR')) {
+                                define('PRODUCT_VIDEOS_DIR', UPLOAD_DIR . 'videos/');
+                            }
+                            $uploadDir = PRODUCT_VIDEOS_DIR;
+                            // Create the videos directory if it doesn't exist
+                            if (!file_exists($uploadDir)) {
+                                mkdir($uploadDir, 0755, true);
+                            }
+                        } else {
+                            $uploadDir = PRODUCT_IMAGES_DIR;
+                        }
+                        
+                        error_log("Attempting to upload file: " . $mediaFile['name'] . " (type: {$mediaType})");
+                        // Allow both image and video file types
+                        $allowedTypes = $isVideo ? 
+                            ['mp4', 'webm', 'ogg', 'mov'] : 
+                            ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                        
+                        $upload = uploadFile($mediaFile, $uploadDir, $allowedTypes);
                         error_log("Upload result: " . print_r($upload, true));
                         
                         if ($upload['success']) {
-                            $isPrimary = empty($currentImages) && $uploadedCount === 0 ? 1 : 0;
-                            $maxOrder++;
-                            $stmt = $conn->prepare("INSERT INTO product_images (product_id, image_path, is_primary, display_order) VALUES (?, ?, ?, ?)");
-                            $stmt->bind_param("isii", $productId, $upload['filename'], $isPrimary, $maxOrder);
+                            $isPrimary = (empty($currentMedia) && $uploadedCount === 0) ? 1 : 0;
+                            $displayOrder = $maxOrder + $uploadedCount + 1; // Calculate display order
+                            
+                            $stmt = $conn->prepare("INSERT INTO product_images (product_id, image_path, media_type, is_primary, display_order) VALUES (?, ?, ?, ?, ?)");
+                            $stmt->bind_param("issii", $productId, $upload['filename'], $mediaType, $isPrimary, $displayOrder);
+                            
                             if ($stmt->execute()) {
                                 $uploadedCount++;
-                                error_log("Successfully inserted image: " . $upload['filename']);
+                                error_log("Successfully inserted media: " . $upload['filename'] . " (type: {$mediaType}, display_order: {$displayOrder})");
+                                
+                                // If this is the first uploaded image and there were no images before, ensure it's set as primary
+                                if ($isPrimary) {
+                                    $imageId = $conn->insert_id;
+                                    $updateStmt = $conn->prepare("UPDATE product_images SET is_primary = 0 WHERE product_id = ? AND id != ?");
+                                    $updateStmt->bind_param("ii", $productId, $imageId);
+                                    $updateStmt->execute();
+                                    $updateStmt->close();
+                                }
                             } else {
-                                error_log("Failed to insert image into database: " . $stmt->error);
+                                error_log("Failed to insert media into database: " . $stmt->error);
+                                // If the insert fails, delete the uploaded file
+                                if (isset($upload['filename']) && file_exists($uploadDir . $upload['filename'])) {
+                                    @unlink($uploadDir . $upload['filename']);
+                                }
                             }
                             $stmt->close();
                         } else {
                             error_log("File upload failed: " . $upload['message']);
                         }
                     } else {
-                        error_log("File upload error code: " . $_FILES['images']['error'][$key]);
+                        error_log("File upload error code: " . $_FILES['media']['error'][$key]);
                     }
                 }
                 
@@ -224,31 +278,137 @@ $conn->close();
                     <?php if (!empty($images)): ?>
                         <div class="mb-3">
                             <label class="form-label">Current Images (<?php echo count($images); ?> images)</label>
-                            <div class="row g-2">
-                                <?php foreach ($images as $image): ?>
-                                    <div class="col-4">
-                                        <div class="position-relative">
-                                            <img src="../uploads/products/<?php echo htmlspecialchars($image['image_path']); ?>" 
-                                                 class="img-fluid rounded" alt="Product image">
-                                            <?php if ($image['is_primary']): ?>
-                                                <span class="badge bg-success position-absolute top-0 start-0 m-2">Primary</span>
-                                            <?php endif; ?>
-                                            <a href="delete-image.php?id=<?php echo $image['id']; ?>&product=<?php echo $productId; ?>" 
-                                               class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2"
-                                               onclick="return confirm('Delete this image?')">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
-                                        </div>
-                                    </div>
+                            <style>
+    .media-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 20px;
+        width: 100%;
+        padding: 10px 0;
+    }
+    .media-item {
+        position: relative;
+        width: 100%;
+        padding-top: 100%; /* 1:1 Aspect Ratio */
+        overflow: hidden;
+        background: #f8f9fa;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .media-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .media-preview {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        transition: all 0.2s ease;
+        background: #fff;
+    }
+    .media-preview:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    .media-preview img,
+    .media-preview video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 10px;
+        transition: transform 0.3s ease;
+    }
+    .media-preview:hover img,
+    .media-preview:hover video {
+        transform: scale(1.05);
+    }
+    .media-actions {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        padding: 10px;
+        background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 70%, transparent 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
+    .media-item:hover .media-actions {
+        opacity: 1;
+    }
+    .media-actions .btn {
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+    }
+    .media-actions .btn:hover {
+        transform: scale(1.1);
+    }
+    .media-actions .btn i {
+        font-size: 1rem;
+    }
+    .primary-badge {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+    }
+</style>
+
+<div class="media-grid">
+    <?php foreach ($images as $image): ?>
+        <div class="media-item">
+            <div class="media-preview">
+                <?php if ($image['media_type'] === 'video'): ?>
+                    <video>
+                        <source src="<?php echo getProductImageUrl($image['image_path']); ?>" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="play-icon">
+                        <i class="fas fa-play-circle"></i>
+                    </div>
+                <?php else: ?>
+                    <img src="<?php echo getProductImageUrl($image['image_path']); ?>" alt="Product Image">
+                <?php endif; ?>
+                <div class="media-actions">
+                    <button type="button" class="btn btn-sm btn-outline-light btn-set-primary" data-id="<?php echo $image['id']; ?>" <?php echo $image['is_primary'] ? 'disabled' : ''; ?> title="Set as Primary">
+                        <i class="fas fa-star"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-light btn-delete-image" data-id="<?php echo $image['id']; ?>" title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <?php if ($image['is_primary']): ?>
+                    <span class="badge bg-primary primary-badge">Primary</span>
+                <?php endif; ?>
+            </div>
+        </div>
                                 <?php endforeach; ?>
                             </div>
                         </div>
                     <?php endif; ?>
                     
                     <div class="mb-3">
-                        <label class="form-label">Add More Images</label>
-                        <input type="file" class="form-control" name="images[]" accept="image/*" multiple>
-                        <small class="text-muted">Upload additional images</small>
+                        <label class="form-label">Add More Media</label>
+                        <input type="file" class="form-control" name="media[]" accept="image/*,video/*" multiple>
+                        <small class="text-muted">Upload additional images or videos</small>
                     </div>
                 </div>
                 
@@ -382,6 +542,79 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+    
+    // Handle delete image button click
+    document.addEventListener('click', function(e) {
+        // Delete image
+        if (e.target.closest('.btn-delete-image')) {
+            const button = e.target.closest('.btn-delete-image');
+            const imageId = button.getAttribute('data-id');
+            const productId = <?php echo $productId; ?>;
+            
+            if (confirm('Are you sure you want to delete this image?')) {
+                fetch(`delete-image.php?id=${imageId}&product=${productId}`, {
+                    method: 'GET'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Remove the image container from the DOM
+                        button.closest('.col-4').remove();
+                        // Show success message
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
+                        alertDiv.innerHTML = 'Image deleted successfully!<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+                        document.querySelector('.card-body').prepend(alertDiv);
+                        // Reload after a short delay
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        alert(data.message || 'Failed to delete image');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while deleting the image');
+                });
+            }
+        }
+        
+        // Set primary image
+        if (e.target.closest('.btn-set-primary')) {
+            const button = e.target.closest('.btn-set-primary');
+            const imageId = button.getAttribute('data-id');
+            const productId = <?php echo $productId; ?>;
+            
+            // Show loading state
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            button.disabled = true;
+            
+            fetch('set-primary-image.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `image_id=${imageId}&product_id=${productId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the page to show updated primary image
+                    location.reload();
+                } else {
+                    alert(data.message || 'Failed to set primary image');
+                    button.innerHTML = originalHTML;
+                    button.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while setting the primary image');
+                button.innerHTML = originalHTML;
+                button.disabled = false;
+            });
+        }
+    });
 });
 </script>
 

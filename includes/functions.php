@@ -233,4 +233,83 @@ function displayTitle($title) {
     // First decode any existing HTML entities, then escape special characters
     return htmlspecialchars(html_entity_decode($title, ENT_QUOTES | ENT_HTML5, 'UTF-8'), ENT_QUOTES | ENT_HTML5, 'UTF-8', false);
 }
+
+/**
+ * Get the full URL for a product image
+ * 
+ * @param string $imagePath The path to the image file
+ * @return string Full URL to the product image
+ */
+/**
+ * Generate a thumbnail for a video file
+ * 
+ * @param string $videoPath Path to the video file
+ * @param string $outputPath Path to save the thumbnail
+ * @param int $time Time in seconds to capture the thumbnail
+ * @return bool True on success, false on failure
+ */
+function generateVideoThumbnail($videoPath, $outputPath, $time = 2) {
+    // Check if FFmpeg is available
+    if (!function_exists('shell_exec') || !shell_exec('which ffmpeg')) {
+        return false;
+    }
+
+    // Ensure output directory exists
+    $outputDir = dirname($outputPath);
+    if (!file_exists($outputDir)) {
+        mkdir($outputDir, 0755, true);
+    }
+
+    // Generate thumbnail using FFmpeg
+    $cmd = sprintf(
+        'ffmpeg -i %s -ss %s -vframes 1 -q:v 2 -y %s 2>&1',
+        escapeshellarg($videoPath),
+        escapeshellarg($time),
+        escapeshellarg($outputPath)
+    );
+
+    exec($cmd, $output, $returnCode);
+    
+    return $returnCode === 0 && file_exists($outputPath);
+}
+
+/**
+ * Get the URL for a product image or video thumbnail
+ * 
+ * @param string $imagePath Path to the image/video file
+ * @param string $mediaType Type of media ('image' or 'video')
+ * @return string Full URL to the image/thumbnail
+ */
+function getProductImageUrl($imagePath, $mediaType = 'image') {
+    if (empty($imagePath)) {
+        return SITE_URL . '/assets/images/placeholder.jpg';
+    }
+    
+    // Check if the path is already a full URL
+    if (filter_var($imagePath, FILTER_VALIDATE_URL)) {
+        return $imagePath;
+    }
+    
+    // Handle video thumbnails
+    if ($mediaType === 'video') {
+        $videoPath = UPLOAD_DIR . 'videos/' . ltrim($imagePath, '/');
+        $thumbnailPath = UPLOAD_DIR . 'thumbs/' . pathinfo($imagePath, PATHINFO_FILENAME) . '.jpg';
+        
+        // Generate thumbnail if it doesn't exist
+        if (!file_exists($thumbnailPath) && file_exists($videoPath)) {
+            generateVideoThumbnail($videoPath, $thumbnailPath);
+        }
+        
+        // If thumbnail generation failed, use a video icon
+        if (!file_exists($thumbnailPath)) {
+            return SITE_URL . '/assets/images/video-thumbnail.jpg';
+        }
+        
+        return SITE_URL . '/uploads/thumbs/' . pathinfo($imagePath, PATHINFO_FILENAME) . '.jpg';
+    }
+    
+    // Handle regular images
+    return SITE_URL . '/uploads/products/' . ltrim($imagePath, '/');
+}
+
 // No closing PHP tag to prevent whitespace issues
